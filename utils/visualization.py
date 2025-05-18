@@ -93,60 +93,92 @@ def plot_heatmap_auc(
     
     return fig, ax
 
-def plot_multi_dataset_heatmaps(
-    results: Dict[str, pd.DataFrame],
-    figsize: tuple = (18, 14),  # Increased figure size for better spacing
-    cmap: str = "viridis",
-    save_path: Optional[str] = None,
-    wspace: float = 0.3,  # Horizontal space between subplots
-    hspace: float = 0.4   # Vertical space between subplots
-) -> plt.Figure:
-    """
-    Create a figure with subplots for AUC heatmaps from multiple datasets with improved spacing.
-    
-    Args:
-        results: Dictionary mapping dataset names to their AUC DataFrames
-        figsize: Figure size for the entire plot
-        cmap: Colormap to use for heatmaps
-        save_path: Path to save the figure (optional)
-        wspace: Width space between subplots
-        hspace: Height space between subplots
-        
-    Returns:
-        Figure object
-    """
-    # Calculate number of rows and columns for subplots
-    n_datasets = len(results)
-    n_cols = 2  # Fixed to 2 columns for better layout
-    n_rows = (n_datasets + 1) // 2
-    
-    # Create figure
-    fig = plt.figure(figsize=figsize)
-    
-    # Create a GridSpec layout with proper spacing
-    gs = fig.add_gridspec(n_rows, n_cols, wspace=wspace, hspace=hspace)
-    
-    # Process each dataset
-    for idx, (dataset_name, auc_df) in enumerate(results.items()):
-        row = idx // n_cols
-        col = idx % n_cols
-        
-        # Create subplot with proper position
-        ax = fig.add_subplot(gs[row, col])
-        
-        # Create heatmap for this dataset
+
+def plot_multi_dataset_heatmaps(results, figsize, cmap, wspace, hspace, save_path, add_titles=False):
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+
+    num_datasets = len(results)
+    fig, axes = plt.subplots(
+        nrows=(num_datasets + 1) // 2, ncols=2, figsize=figsize
+    )
+    axes = axes.flatten()
+
+    for i, (dataset_name, auc_df) in enumerate(results.items()):
         sns.heatmap(
-            data=auc_df,
-            annot=True,
-            fmt='.3f',
+            auc_df,
+            ax=axes[i],
             cmap=cmap,
-            center=0.75,
-            vmin=0.5,
-            vmax=1.0,
-            ax=ax,
-            annot_kws={'size': 11, 'weight': 'bold'},
-            linewidths=0.5,
-            cbar_kws={'label': 'AUC Score', 'shrink': 0.8}
+            annot=True,
+            fmt=".2f",
+            cbar=False,
+            linewidths=0.5
         )
+        if add_titles:
+            axes[i].set_title(dataset_name, fontsize=14, weight="bold")
+
+    # Remove unused subplots
+    for j in range(i + 1, len(axes)):
+        fig.delaxes(axes[j])
+
+    plt.subplots_adjust(wspace=wspace, hspace=hspace)
+    plt.savefig(save_path, dpi=300, bbox_inches="tight")
+    return fig
+
+# def plot_multi_dataset_heatmaps(
+#     results: Dict[str, pd.DataFrame],
+#     figsize: tuple = (18, 14),  # Increased figure size for better spacing
+#     cmap: str = "viridis",
+#     save_path: Optional[str] = None,
+#     wspace: float = 0.3,  # Horizontal space between subplots
+#     hspace: float = 0.4   # Vertical space between subplots
+# ) -> plt.Figure:
+#     """
+#     Create a figure with subplots for AUC heatmaps from multiple datasets with improved spacing.
+    
+#     Args:
+#         results: Dictionary mapping dataset names to their AUC DataFrames
+#         figsize: Figure size for the entire plot
+#         cmap: Colormap to use for heatmaps
+#         save_path: Path to save the figure (optional)
+#         wspace: Width space between subplots
+#         hspace: Height space between subplots
+        
+#     Returns:
+#         Figure object
+#     """
+#     # Calculate number of rows and columns for subplots
+#     n_datasets = len(results)
+#     n_cols = 2  # Fixed to 2 columns for better layout
+#     n_rows = (n_datasets + 1) // 2
+    
+#     # Create figure
+#     fig = plt.figure(figsize=figsize)
+    
+#     # Create a GridSpec layout with proper spacing
+#     gs = fig.add_gridspec(n_rows, n_cols, wspace=wspace, hspace=hspace)
+    
+#     # Process each dataset
+#     for idx, (dataset_name, auc_df) in enumerate(results.items()):
+#         row = idx // n_cols
+#         col = idx % n_cols
+        
+#         # Create subplot with proper position
+#         ax = fig.add_subplot(gs[row, col])
+        
+#         # Create heatmap for this dataset
+#         sns.heatmap(
+#             data=auc_df,
+#             annot=True,
+#             fmt='.3f',
+#             cmap=cmap,
+#             center=0.75,
+#             vmin=0.5,
+#             vmax=1.0,
+#             ax=ax,
+#             annot_kws={'size': 11, 'weight': 'bold'},
+#             linewidths=0.5,
+#             cbar_kws={'label': 'AUC Score', 'shrink': 0.8}
+#         )
         
         # Set title with increased size an
