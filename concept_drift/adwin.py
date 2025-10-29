@@ -1,9 +1,8 @@
-# concept_drift/ddm.py
 from river.drift import ADWIN
 
 class ADWINDriftDetector:
     def __init__(self):
-        self.detector = ADWIN()
+        self.detector = ADWIN(width = 100)
         self.drift_detected = False
 
     def update(self, prediction, true_label):
