@@ -19,8 +19,8 @@ class ARFDriftDetector:
                  n_models=10, 
                  max_features='sqrt', 
                  lambda_value=6,
-                 warning_window_size=50,
-                 drift_window_size=30,
+                 warning_window_size=100,
+                 drift_window_size=100,
                  warning_threshold=0.85,
                  drift_threshold=0.75,
                  seed=None):

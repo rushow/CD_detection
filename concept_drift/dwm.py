@@ -150,7 +150,7 @@ class DWMDriftDetector:
         n_classes=2,
         beta=0.5,
         theta=0.1,
-        period=50
+        period=100
     ):
         """
         Dynamic Weighted Majority (DWM) drift detector and ensemble learner

@@ -10,7 +10,7 @@ class WSTDDriftDetector:
     distributional shifts in the data stream.
     """
     
-    def __init__(self, window_size=100, 
+    def __init__(self, window_size=20, 
                  alpha=0.05, 
                  warning_threshold=0.10,
                  min_samples=10,

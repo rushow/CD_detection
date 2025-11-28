@@ -3,7 +3,7 @@ from river.drift import KSWIN
 
 class KSWINDriftDetector:
     def __init__(self):
-        self.detector = KSWIN()
+        self.detector = KSWIN(window_size = 20, stat_size = 10)
         self.drift_detected = False
 
     def update(self, prediction, true_label):

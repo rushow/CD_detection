@@ -3,7 +3,7 @@ import numpy as np
 from scipy.stats import fisher_exact
 
 class FPDDDriftDetector:
-    def __init__(self, window_size=30, alpha=0.05):
+    def __init__(self, window_size=20, alpha=0.05):
         """
         Fisher Proportions Drift Detector (FPDD)
 

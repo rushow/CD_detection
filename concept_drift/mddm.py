@@ -57,7 +57,7 @@ import math
 
 
 class MDDMDriftDetector:
-    def __init__(self, window_size=50, confidence_level=0.05):
+    def __init__(self, window_size=20, confidence_level=0.05):
         """
         Initialize the MDDM detector with a sliding window size and confidence level.
         

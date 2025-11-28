@@ -7,16 +7,9 @@ import numpy as np
 from typing import Union, List, Tuple, Optional, Literal
 
 class D3DriftDetector:
-    """
-    Discriminative Drift Detector (D3) implementation.
-    
-    This detector identifies concept drift by training a classifier to distinguish
-    between samples from past and current distributions.
-    """
-    
     def __init__(
         self, 
-        window_size: int = 100, 
+        window_size: int = 20, 
         classifier = None, 
         threshold: float = 0.7,
         metric: Literal['accuracy', 'roc_auc'] = 'accuracy'
@@ -36,8 +29,74 @@ class D3DriftDetector:
         self.metric = metric
         self.samples = []
         self.drift_detected = False
+        # track feature keys when samples are dict-like (e.g., River)
+        self.feature_keys = None
         self._validate_params()
         
+    def _to_array(self, samples: List) -> np.ndarray:
+        """
+        Convert a list of samples to a 2D numpy array.
+        Supports samples that are:
+          - dict-like (feature name -> value)
+          - list/tuple/1D numpy arrays (feature vector)
+          - scalar numbers (will be cast to shape (n,1))
+        """
+        if len(samples) == 0:
+            return np.empty((0, 0))
+
+        # If any sample is a dict, construct a feature matrix from dict keys
+        if any(isinstance(s, dict) for s in samples):
+            # compute union of keys across samples to ensure consistent columns
+            keys = sorted(set().union(*(s.keys() for s in samples if isinstance(s, dict))))
+            self.feature_keys = keys
+            rows = []
+            for s in samples:
+                if isinstance(s, dict):
+                    row = []
+                    for k in keys:
+                        v = s.get(k, 0.0)
+                        try:
+                            row.append(float(v))
+                        except Exception:
+                            # fallback to 0.0 for non-convertible entries
+                            row.append(0.0)
+                    rows.append(row)
+                else:
+                    # non-dict sample: try to convert to numeric vector
+                    try:
+                        arr = np.asarray(s, dtype=float).ravel()
+                        # if lengths mismatch, pad/truncate to len(keys)
+                        if arr.size < len(keys):
+                            padded = np.zeros(len(keys), dtype=float)
+                            padded[:arr.size] = arr
+                            rows.append(padded.tolist())
+                        else:
+                            rows.append(arr[:len(keys)].tolist())
+                    except Exception:
+                        rows.append([0.0] * len(keys))
+            return np.asarray(rows, dtype=float)
+
+        # If samples are already sequences/numeric, let numpy handle them
+        try:
+            arr = np.asarray(samples, dtype=float)
+            # If arr is 1D (a list of scalars), convert to column vector
+            if arr.ndim == 1:
+                arr = arr.reshape(-1, 1)
+            return arr
+        except Exception:
+            # fallback: try converting each sample to numeric vector elementwise
+            rows = []
+            for s in samples:
+                try:
+                    row = np.asarray(s, dtype=float).ravel()
+                    rows.append(row)
+                except Exception:
+                    rows.append([0.0])
+            # pad rows to equal length
+            max_len = max(len(r) for r in rows) if rows else 0
+            padded = [list(r) + [0.0] * (max_len - len(r)) for r in rows]
+            return np.asarray(padded, dtype=float)
+    
     def _validate_params(self) -> None:
         """Validate initialization parameters."""
         if not isinstance(self.window_size, int) or self.window_size <= 0:
@@ -83,8 +142,15 @@ class D3DriftDetector:
     
     def _detect_drift(self) -> str:
         """Perform drift detection using the classifier."""
+        # Convert collected samples to numeric arrays (handles dict-like samples)
+        try:
+            samples_array = self._to_array(self.samples)
+        except Exception as e:
+            print(f"Error converting samples to array for drift detection: {e}")
+            self.drift_detected = False
+            return 'no_drift'
+
         # Create past and current windows
-        samples_array = np.array(self.samples)
         X_past = samples_array[:self.window_size]
         X_current = samples_array[-self.window_size:]
         

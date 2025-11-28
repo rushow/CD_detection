@@ -60,16 +60,16 @@ drift_detectors = {
     # 'RDDM': RDDMDriftDetector(), # 2017               # warning_threshold=1.773, drift_threshold=2.258
     # 'FHDDM': FHDDMDriftDetector(), # 2016 == River
     # 'EWMA': EWMADriftDetector(), # 2012               # lambda_ = 0.2, min_instances = 30
-    'EDDM': EDDMDriftDetector(), # 2006 == River
+    # 'EDDM': EDDMDriftDetector(), # 2006 == River
     # Window-Based Drift Detectors
-    # 'KSWIN': KSWINDriftDetector(), #2020 == River
-    # 'FPDD': FPDDDriftDetector(), # 2018                 # window_size = 30, alpha = 0.05
-    # 'WSTD': WSTDDriftDetector(), # 2018                 # window_size = 100, alpha=0.05, warning_threshold=0.10
-    # 'MDDM': MDDMDriftDetector(), #2018                  # window_size=50, confidence_level=0.05
-    # 'ADWIN': ADWINDriftDetector(), # 2007 == River
+    'KSWIN': KSWINDriftDetector(), #2020 == River
+    'FPDD': FPDDDriftDetector(), # 2018                 # window_size = 30, alpha = 0.05
+    'WSTD': WSTDDriftDetector(), # 2018                 # window_size = 100, alpha=0.05, warning_threshold=0.10
+    'MDDM': MDDMDriftDetector(), #2018                  # window_size=50, confidence_level=0.05
+    'ADWIN': ADWINDriftDetector(), # 2007 == River
+    'D3': D3DriftDetector(), #2015                    # window_size=100, threshold=0.7
     # Ensemble-Based Drift Detectors
     # 'ARF': ARFDriftDetector(), # 2017                 # lambda_value=6, warning_window_size=50, drift_window_size=30, warning_threshold=0.85, drift_threshold=0.75
-    # 'D3': D3DriftDetector(), #2015                    # window_size=100, threshold=0.7
     # 'AUE': AUEDriftDetector(), # 2011                 # ensemble_size=10, chunk_size=100
     # 'DWM': DWMDriftDetector(), # 2007                 # beta=0.5, theta=0.1, period=50
     # 'AWE': AWEDriftDetector(), # 2003                 # chunk_size=50, ensemble_size=5
@@ -89,8 +89,8 @@ for load_func, dataset_name in datasets:
         df_name, X, y = load_func()
 
         # Print the first 5 rows of the features
-        print(f"Head of {dataset_name} dataset:")
-        print(pd.DataFrame(X).head())
+        # print(f"Head of {dataset_name} dataset:")
+        # print(pd.DataFrame(X).head())
 
         # Print unique labels for the dataset
         print(f"Labels for {dataset_name}: {set(y)}")
@@ -115,11 +115,11 @@ for load_func, dataset_name in datasets:
                 data_auc[model_name][detector_name] = auc_value
                 
                 # Print metrics
-                print(f"Accuracy: {metric}")
-                print(f"Precision: {metric_precision}")
-                print(f"F1: {metric_f1}")
+                # print(f"Accuracy: {metric}")
+                # print(f"Precision: {metric_precision}")
+                # print(f"F1: {metric_f1}")
                 print(f"AUC: {auc_value}")
-                print(f"AUROC: {auroc_value}")
+                # print(f"AUROC: {auroc_value}")
         
         # Store results for this dataset
         results[dataset_name] = pd.DataFrame.from_dict(data_auc, orient='index')

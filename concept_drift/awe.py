@@ -176,7 +176,7 @@ from river import base, naive_bayes
 from sklearn.metrics import mean_squared_error
 
 class AWEDriftDetector:
-    def __init__(self, chunk_size=50, ensemble_size=5):
+    def __init__(self, chunk_size=100, ensemble_size=5):
         base_model=naive_bayes.GaussianNB()
         self.base_model = base_model
         self.chunk_size = chunk_size
