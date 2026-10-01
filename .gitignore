@@ -1,2 +1,6 @@
 myenv/
 .idea/
+__pycache__/
+*.pyc
+.DS_Store
+*.whl

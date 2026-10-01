@@ -57,14 +57,8 @@ import math
 
 
 class MDDMDriftDetector:
-    def __init__(self, window_size=20, confidence_level=0.05):
-        """
-        Initialize the MDDM detector with a sliding window size and confidence level.
+    def __init__(self, window_size=50, confidence_level=0.05):
         
-        Parameters:
-        - window_size (int): The size of the sliding window.
-        - confidence_level (float): Confidence threshold for drift detection.
-        """
         self.window_size = window_size
         self.confidence_level = confidence_level
         self.scores = []  # To store scores (1 if error, 0 if correct)
@@ -73,25 +67,11 @@ class MDDMDriftDetector:
         self.drift_detected = False  # Attribute to track drift detection status
 
     def mcdiarmid_bound(self):
-        """
-        Calculate the McDiarmid bound based on window size and confidence level.
         
-        Returns:
-        - bound (float): The calculated McDiarmid bound.
-        """
         return math.sqrt((1 / (2 * self.window_size)) * math.log(1 / self.confidence_level))
 
     def update(self, prediction, true_label):
-        """
-        Update the detector with the latest instance prediction and check for drift.
         
-        Parameters:
-        - prediction: Predicted label for the instance.
-        - true_label: True label for the instance.
-        
-        Returns:
-        - drift_detected (bool): True if drift is detected, False otherwise.
-        """
         is_error = int(prediction != true_label)  # 1 if error, 0 if correct
         self.scores.append(is_error)
 

@@ -150,7 +150,8 @@ class DWMDriftDetector:
         n_classes=2,
         beta=0.5,
         theta=0.1,
-        period=100
+        period=100,
+        max_experts=15    #Ensemble size control, None for unlimited
     ):
         """
         Dynamic Weighted Majority (DWM) drift detector and ensemble learner
@@ -167,12 +168,16 @@ class DWMDriftDetector:
             Threshold for removing experts
         period : int
             Period between expert removal, creation, and weight update
+        max_experts : int or None
+            Maximum number of experts to keep in the ensemble. If None, the
+            ensemble size remains dynamic.
         """
         self.base_estimator = base_estimator
         self.n_classes = n_classes
         self.beta = beta
         self.theta = theta
         self.period = period
+        self.max_experts = max_experts
         
         # Initialize ensemble
         self.experts = []
@@ -196,7 +201,7 @@ class DWMDriftDetector:
         if not self.weights:
             return
         
-        keep_indices = [i for i, w in enumerate(self.weights) if w > self.theta]
+        keep_indices = [i for i, w in enumerate(self.weights) if w >= self.theta]
         self.experts = [self.experts[i] for i in keep_indices]
         self.weights = [self.weights[i] for i in keep_indices]
     
@@ -289,22 +294,21 @@ class DWMDriftDetector:
                 print(f"Learning error: {e}")
                 continue
     
-    def update(self, y_pred: int, y_true: int):
+    def update(self, x: Dict, y_true: int):
         """
         Update the detector with a new prediction and true label
         
         Parameters
         ----------
-        y_pred : int
-            Predicted label
         y_true : int
             True label
         """
         if self._current_x is None or not self.experts:
             return
-            
         self.drift_detected = False
         self.sample_count += 1
+        self._current_x = x
+        global_prediction = self.predict_one(x)
         
         # Update weights and check for drift periodically
         if self.sample_count % self.period == 0:
@@ -330,11 +334,15 @@ class DWMDriftDetector:
             self._remove_experts()
             
             # Add new expert if global prediction was wrong
-            if y_pred != y_true and self.base_estimator is not None:
+            if global_prediction != y_true and self.base_estimator is not None:
                 self.drift_detected = True
                 new_expert = copy.deepcopy(self.base_estimator)
                 try:
                     new_expert.learn_one(self._current_x, y_true)
+                    if self.max_experts is not None and len(self.experts) >= self.max_experts:
+                        weakest_index = min(range(len(self.weights)), key=lambda i: self.weights[i])
+                        self.experts.pop(weakest_index)
+                        self.weights.pop(weakest_index)
                     self.experts.append(new_expert)
                     self.weights.append(1.0)
                 except Exception as e:

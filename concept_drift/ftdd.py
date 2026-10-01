@@ -1,64 +1,6 @@
-# import numpy as np
-# from scipy.stats import fisher_exact
+import math
+from dataclasses import dataclass
 
-# class FTDDDriftDetector:
-#     def __init__(self, window_size=100, p_value_threshold=0.05):
-#         self.window_size = window_size
-#         self.p_value_threshold = p_value_threshold
-#         self.reset()
-
-#     def reset(self):
-#         self.reference_window = []
-#         self.current_window = []
-#         self.drift_detected = False
-
-#     def update(self, prediction, true_label):
-#         error = 1 if prediction != true_label else 0
-#         self.current_window.append(error)
-
-#         # If current window is full, perform the Fisher's exact test
-#         if len(self.current_window) == self.window_size:
-#             if len(self.reference_window) < self.window_size:
-#                 # Populate the reference window if not yet full
-#                 self.reference_window.extend(self.current_window)
-#             else:
-#                 # Perform Fisher's exact test
-#                 contingency_table = self._create_contingency_table()
-#                 _, p_value = fisher_exact(contingency_table)
-
-#                 # Check if drift is detected
-#                 if p_value < self.p_value_threshold:
-#                     self.drift_detected = True
-#                     self.reset()  # Reset windows on drift detection
-#                     return 'drift'
-#                 else:
-#                     self.drift_detected = False
-#                     self.reference_window = self.current_window.copy()
-
-#             # Reset current window
-#             self.current_window = []
-
-#         return 'no_drift'
-
-#     def _create_contingency_table(self):
-#         # Calculate the number of errors in both windows
-#         ref_errors = sum(self.reference_window)
-#         curr_errors = sum(self.current_window)
-
-#         # Create a 2x2 contingency table
-#         ref_correct = self.window_size - ref_errors
-#         curr_correct = self.window_size - curr_errors
-
-#         contingency_table = np.array([[ref_correct, ref_errors], [curr_correct, curr_errors]])
-#         return contingency_table
-
-
-
-
-import numpy as np
-from scipy.stats import fisher_exact
-from typing import Tuple, Optional, List
-from dataclasses import dataclass, field
 
 @dataclass
 class FTDDStats:
@@ -68,130 +10,89 @@ class FTDDStats:
     error_rate_reference: float = 0.0
     error_rate_current: float = 0.0
 
-class FTDDDriftDetector:
- 
-    def __init__(
-        self, 
-        window_size: int = 100,
-        p_value_threshold: float = 0.05,
-        warning_threshold: float = 0.1,
-        min_window_size: int = 30
-    ):
-        """
-        Initialize the FTDD drift detector.
-        
-        Args:
-            window_size: Size of the reference and detection windows
-            p_value_threshold: Threshold for drift detection
-            warning_threshold: Threshold for warning level
-            min_window_size: Minimum samples before testing for drift
-        """
-        self.window_size = window_size
-        self.p_value_threshold = p_value_threshold
-        self.warning_threshold = warning_threshold
-        self.min_window_size = min_window_size
-        self.stats = FTDDStats()
-        self.reset()
 
-    def reset(self) -> None:
-        """Reset the detector state."""
-        self.reference_window: List[int] = []
-        self.current_window: List[int] = []
+class FTDDDriftDetector:
+
+    def __init__(
+        self,
+        window_size: int = 50,
+        drift_level: float = 0.05,
+        warning_level: float = 0.1,
+    ):
+        self.w = window_size    # w  (recent window size)
+        self.alpha_d = drift_level   # αd
+        self.alpha_w = warning_level  # αw
+
+        # Algorithm 1, lines 3-5: precompute factorials and constF
+        self.maxim = 2 * self.w
+        self.fact = [math.factorial(i) for i in range(self.maxim + 1)]
+        self.const_f = (self.fact[self.w] ** 2) / self.fact[self.maxim]
+
+        self.stats = FTDDStats()
+        self._reset_method_stats()
+
+    def _reset_method_stats(self) -> None:
+        """Algorithm 1, line 1 / line 8: reset methodStats."""
         self.drift_detected = False
-        self.warning_zone = False
-        
+        self.is_warning_zone = False
+        self.no = 0   # total samples in older window
+        self.wo = 0   # wrong predictions in older window
+        self.recent: list = []  # recent window, length <= w
+
+    def _compute_p_value(self, wr: int, wp: int) -> float:
+        """Algorithm 4: FTDD p-value calculation."""
+        rr = self.w - wr
+        rp = self.w - wp
+        fact = self.fact
+        p = (fact[wr + wp] / fact[wr] / fact[wp] *
+             fact[rr + rp] / fact[rr] / fact[rp])
+        return min(p * self.const_f * 2, 1.0)
+
     def get_current_stats(self) -> FTDDStats:
-        """Return current detection statistics."""
         return self.stats
 
-    def _calculate_error_rates(self) -> Tuple[float, float]:
-        """Calculate error rates for both windows."""
-        ref_errors = sum(self.reference_window)
-        curr_errors = sum(self.current_window)
-        
-        ref_rate = ref_errors / len(self.reference_window) if self.reference_window else 0
-        curr_rate = curr_errors / len(self.current_window) if self.current_window else 0
-        
-        return ref_rate, curr_rate
-
-    def _create_contingency_table(self) -> np.ndarray:
-        """Create contingency table for Fisher's exact test."""
-        ref_errors = sum(self.reference_window)
-        curr_errors = sum(self.current_window)
-        
-        ref_correct = len(self.reference_window) - ref_errors
-        curr_correct = len(self.current_window) - curr_errors
-        
-        return np.array([[ref_correct, ref_errors], 
-                        [curr_correct, curr_errors]])
-
-    def _check_for_drift(self) -> Tuple[bool, float]:
+    def update(self, prediction, true_label) -> str:
         """
-        Perform Fisher's exact test and check for drift.
-        
-        Returns:
-            Tuple of (drift_detected, p_value)
-        """
-        contingency_table = self._create_contingency_table()
-        _, p_value = fisher_exact(contingency_table)
-        
-        self.stats.p_value = p_value
-        self.stats.error_rate_reference, self.stats.error_rate_current = self._calculate_error_rates()
-        
-        drift_detected = p_value < self.p_value_threshold
-        warning_zone = self.p_value_threshold <= p_value < self.warning_threshold
-        
-        if drift_detected:
-            self.stats.drift_count += 1
-        if warning_zone:
-            self.stats.warning_count += 1
-            
-        return drift_detected, p_value
-
-    def update(self, prediction: any, true_label: any) -> str:
-        """
-        Update the detector with a new sample.
-        
-        Args:
-            prediction: The predicted value
-            true_label: The true value
-            
-        Returns:
-            str: Status ('drift', 'warning', or 'normal')
+        Update detector with one sample.
+        Returns 'drift', 'warning', or 'normal'.
         """
         error = 1 if prediction != true_label else 0
-        self.current_window.append(error)
-        
-        # Early drift detection with minimum window size
-        if (len(self.current_window) >= self.min_window_size and 
-            len(self.reference_window) >= self.min_window_size):
-            
-            drift_detected, p_value = self._check_for_drift()
-            
-            if drift_detected:
+
+        # Algorithm 1, lines 7-9: reset at start of next instance after drift
+        if self.drift_detected:
+            self._reset_method_stats()
+
+        # Algorithm 1, line 10: update older and recent windows
+        # When recent window is full, oldest element moves to older window
+        if len(self.recent) == self.w:
+            oldest = self.recent.pop(0)
+            self.no += 1
+            self.wo += oldest
+        self.recent.append(error)
+
+        # Algorithm 1, line 11
+        self.is_warning_zone = False
+
+        # Algorithm 1, line 12: only test when older window has >= w samples
+        if self.no >= self.w:
+            # Algorithm 1, lines 13-14: scale older window counts to size w
+            wp = round(self.wo * self.w / self.no)
+            wr = sum(self.recent)
+
+            # Algorithm 4
+            p_value = self._compute_p_value(wr, wp)
+            self.stats.p_value = p_value
+            self.stats.error_rate_reference = self.wo / self.no
+            self.stats.error_rate_current = wr / self.w
+
+            # Algorithm 1, lines 16-19
+            if p_value < self.alpha_d:
                 self.drift_detected = True
-                self.warning_zone = False
-                self.reset()
+                self.stats.drift_count += 1
                 return 'drift'
-            
-            elif p_value < self.warning_threshold:
-                self.warning_zone = True
+            elif p_value < self.alpha_w:
+                self.is_warning_zone = True
+                self.stats.warning_count += 1
                 return 'warning'
-        
-        # Handle full window
-        if len(self.current_window) == self.window_size:
-            if len(self.reference_window) < self.window_size:
-                self.reference_window.extend(self.current_window)
-            else:
-                drift_detected, _ = self._check_for_drift()
-                
-                if drift_detected:
-                    self.drift_detected = True
-                    self.reset()
-                    return 'drift'
-                else:
-                    self.reference_window = self.current_window.copy()
-            
-            self.current_window = []
-            
+
         return 'normal'

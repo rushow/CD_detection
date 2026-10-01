@@ -3,34 +3,14 @@ from scipy.stats import mannwhitneyu
 import logging
 
 class WSTDDriftDetector:
-    """
-    Window-based Statistical Test Drift Detector using the Wilcoxon rank-sum test.
     
-    This detector compares two halves of a sliding window of observations to detect
-    distributional shifts in the data stream.
-    """
     
-    def __init__(self, window_size=20, 
+    def __init__(self, window_size=50, 
                  alpha=0.05, 
                  warning_threshold=0.10,
                  min_samples=10,
                  max_window_size=10000):
-        """
-        Initialize the drift detector.
         
-        Parameters:
-        -----------
-        window_size : int, default=100
-            The size of the sliding window to maintain.
-        alpha : float, default=0.05
-            The significance level for the statistical test (drift threshold).
-        warning_threshold : float, default=0.10
-            The warning level threshold (should be > alpha).
-        min_samples : int, default=10
-            The minimum number of samples required in each half to perform the test.
-        max_window_size : int, default=10000
-            Maximum number of instances to store before forcing a window reset.
-        """
         if window_size <= 1:
             raise ValueError("window_size must be greater than 1")
         if alpha <= 0 or alpha >= 1:
@@ -63,21 +43,7 @@ class WSTDDriftDetector:
         self.test_statistic = None
 
     def update(self, y_true, y_pred=None):
-        """
-        Update the detector with a new observation.
         
-        Parameters:
-        -----------
-        y_true : float or convertible to float
-            The true value to add to the window.
-        y_pred : any, default=None
-            Prediction value (not used in this implementation but included for API consistency).
-            
-        Returns:
-        --------
-        str
-            'drift', 'warning', or 'no_drift' indicating the current status.
-        """
         # Reset status flags at the beginning of the update
         self.drift_detected = False
         self.warning_detected = False
@@ -170,14 +136,7 @@ class WSTDDriftDetector:
         return 'no_drift'
         
     def get_status(self):
-        """
-        Get the current status of the detector.
         
-        Returns:
-        --------
-        dict
-            A dictionary containing the current status.
-        """
         return {
             "drift_detected": self.drift_detected,
             "warning_detected": self.warning_detected,

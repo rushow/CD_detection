@@ -16,7 +16,7 @@ class ARFDriftDetector:
     """
     
     def __init__(self, 
-                 n_models=10, 
+                 n_models=15,       # ensemble size
                  max_features='sqrt', 
                  lambda_value=6,
                  warning_window_size=100,

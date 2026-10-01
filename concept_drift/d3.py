@@ -9,20 +9,12 @@ from typing import Union, List, Tuple, Optional, Literal
 class D3DriftDetector:
     def __init__(
         self, 
-        window_size: int = 20, 
+        window_size: int = 50, 
         classifier = None, 
         threshold: float = 0.7,
         metric: Literal['accuracy', 'roc_auc'] = 'accuracy'
     ):
-        """
-        Initialize the D3 drift detector.
-        
-        Args:
-            window_size: Number of samples in each window
-            classifier: Classifier to distinguish between distributions (default: RandomForestClassifier)
-            threshold: Detection threshold for the metric
-            metric: Performance metric to use ('accuracy' or 'roc_auc')
-        """
+       
         self.window_size = window_size
         self.classifier = classifier if classifier is not None else RandomForestClassifier()
         self.threshold = threshold
@@ -34,13 +26,7 @@ class D3DriftDetector:
         self._validate_params()
         
     def _to_array(self, samples: List) -> np.ndarray:
-        """
-        Convert a list of samples to a 2D numpy array.
-        Supports samples that are:
-          - dict-like (feature name -> value)
-          - list/tuple/1D numpy arrays (feature vector)
-          - scalar numbers (will be cast to shape (n,1))
-        """
+
         if len(samples) == 0:
             return np.empty((0, 0))
 
@@ -109,16 +95,7 @@ class D3DriftDetector:
             raise ValueError(f"metric must be 'accuracy' or 'roc_auc', got {self.metric}")
     
     def update(self, X: Union[np.ndarray, List], y = None) -> str:
-        """
-        Update the detector with new samples and check for drift.
-        
-        Args:
-            X: New data samples (can be single sample or batch)
-            y: Labels (not used for drift detection, included for API consistency)
-            
-        Returns:
-            'drift' if drift is detected, 'no_drift' otherwise
-        """
+
         # Handle both single samples and batches
         if not isinstance(X, list) and not isinstance(X, np.ndarray):
             X = [X]

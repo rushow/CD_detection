@@ -77,7 +77,7 @@ class AUEDriftDetector:
             Size of data chunks for training and evaluation
         """
         base_classifier=naive_bayes.GaussianNB()
-        ensemble_size=10
+        ensemble_size=15
         chunk_size=100
 
 

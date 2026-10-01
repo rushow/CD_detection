@@ -18,25 +18,7 @@ def plot_heatmap_auc(
     center: Optional[float] = 0.75,
     save_path: Optional[str] = None
 ) -> Tuple[plt.Figure, plt.Axes]:
-    """
-    Create an enhanced heatmap visualization for AUC scores comparison.
-    
-    Args:
-        data: DataFrame with models as index and drift detectors as columns
-        figsize: Figure size as (width, height)
-        cmap: Colormap for heatmap (default: viridis)
-        title_fontsize: Font size for title
-        label_fontsize: Font size for axis labels
-        annotation_fontsize: Font size for cell annotations
-        rotation_xticks: Rotation angle for x-axis labels
-        vmin: Minimum value for colormap scaling
-        vmax: Maximum value for colormap scaling
-        center: Center value for colormap
-        save_path: Path to save the figure (optional)
-        
-    Returns:
-        Tuple of (figure, axis)
-    """
+
     # Set the style
     sns.set_style("white")
     

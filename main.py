@@ -44,7 +44,7 @@ datasets = [
     (load_mixed_0101_gradual_data, "Mixed Gradual"),
     (load_elec_data, "Electricity"),
     # (load_kdd_data, "KDD"),
-    (load_iot_data, "IoT"),
+    # (load_iot_data, "IoT"),
     (load_cic_data, "CIC")
 ]
 
@@ -56,23 +56,23 @@ models = {
 
 drift_detectors = {
     # Statistical-Based Drift Detectors
-    # 'FTDD': FTDDDriftDetector(), # 2018               # window_size = 100, p_value_threshold = 0.05, warning_threshold = 0.1, min_window_size = 30
-    # 'RDDM': RDDMDriftDetector(), # 2017               # warning_threshold=1.773, drift_threshold=2.258
-    # 'FHDDM': FHDDMDriftDetector(), # 2016 == River
-    # 'EWMA': EWMADriftDetector(), # 2012               # lambda_ = 0.2, min_instances = 30
-    # 'EDDM': EDDMDriftDetector(), # 2006 == River
+    'FTDD': FTDDDriftDetector(), # 2018   
+    'RDDM': RDDMDriftDetector(), # 2017               
+    'FHDDM': FHDDMDriftDetector(), # 2016 
+    'EWMA': EWMADriftDetector(), # 2012              
+    'EDDM': EDDMDriftDetector(), # 2006 
     # Window-Based Drift Detectors
-    'KSWIN': KSWINDriftDetector(), #2020 == River
-    'FPDD': FPDDDriftDetector(), # 2018                 # window_size = 30, alpha = 0.05
-    'WSTD': WSTDDriftDetector(), # 2018                 # window_size = 100, alpha=0.05, warning_threshold=0.10
-    'MDDM': MDDMDriftDetector(), #2018                  # window_size=50, confidence_level=0.05
-    'ADWIN': ADWINDriftDetector(), # 2007 == River
-    'D3': D3DriftDetector(), #2015                    # window_size=100, threshold=0.7
+    'KSWIN': KSWINDriftDetector(), #2020 
+    'FPDD': FPDDDriftDetector(), # 2018                 
+    'WSTD': WSTDDriftDetector(), # 2018                 
+    'MDDM': MDDMDriftDetector(), #2018                  
+    'ADWIN': ADWINDriftDetector(), # 2007 
+    'D3': D3DriftDetector(), #2015                    
     # Ensemble-Based Drift Detectors
-    # 'ARF': ARFDriftDetector(), # 2017                 # lambda_value=6, warning_window_size=50, drift_window_size=30, warning_threshold=0.85, drift_threshold=0.75
-    # 'AUE': AUEDriftDetector(), # 2011                 # ensemble_size=10, chunk_size=100
-    # 'DWM': DWMDriftDetector(), # 2007                 # beta=0.5, theta=0.1, period=50
-    # 'AWE': AWEDriftDetector(), # 2003                 # chunk_size=50, ensemble_size=5
+    # 'ARF': ARFDriftDetector(), # 2017                 
+    # 'AUE': AUEDriftDetector(), # 2011                 
+    # 'DWM': DWMDriftDetector(), # 2007                 
+    # 'AWE': AWEDriftDetector(), # 2003                 
 }
 
 cd_detector_name = ''
@@ -147,30 +147,30 @@ except Exception as e:
     print(f"Error creating multi-dataset visualization: {str(e)}")
 
 # Create individual heatmaps for each dataset with enhanced readability
-for dataset_name, auc_df in results.items():
-    try:
-        print(f"Creating visualization for {dataset_name}...")
+# for dataset_name, auc_df in results.items():
+#     try:
+#         print(f"Creating visualization for {dataset_name}...")
         
-        # Create enhanced heatmap
-        fig, ax = plot_heatmap_auc(
-            data=auc_df,
-            figsize=(10, 6),
-            cmap="viridis",  # Use consistent colormaps or try different ones
-            title_fontsize=16,
-            annotation_fontsize=12,
-        )
+#         # Create enhanced heatmap
+#         fig, ax = plot_heatmap_auc(
+#             data=auc_df,
+#             figsize=(10, 6),
+#             cmap="viridis",  # Use consistent colormaps or try different ones
+#             title_fontsize=16,
+#             annotation_fontsize=12,
+#         )
         
-        # Override the default title with the dataset name
-        ax.set_title(f'{dataset_name} Dataset', 
-                    fontsize=16, 
-                    weight='bold', 
-                    pad=20)
+#         # Override the default title with the dataset name
+#         ax.set_title(f'{dataset_name} Dataset', 
+#                     fontsize=16, 
+#                     weight='bold', 
+#                     pad=20)
         
-        plt.tight_layout()
-        plt.savefig(os.path.join(results_dir, f"{dataset_name.replace(' ', '_')}_heatmap.png"), dpi=300, bbox_inches='tight')
-        plt.show()
-    except Exception as e:
-        print(f"Error creating visualization for {dataset_name}: {str(e)}")
+#         plt.tight_layout()
+#         plt.savefig(os.path.join(results_dir, f"{dataset_name.replace(' ', '_')}_heatmap.png"), dpi=300, bbox_inches='tight')
+#         plt.show()
+#     except Exception as e:
+#         print(f"Error creating visualization for {dataset_name}: {str(e)}")
 
 # Create summary DataFrame
 summary_df = pd.DataFrame({
